@@ -1,0 +1,13 @@
+workflows:
+  loanconnect-android:
+    name: LoanConnect Android APK
+    environment:
+      groups:
+        - google_play
+      java: 21
+    scripts:
+      - name: Build debug APK
+        script: |
+          gradle --no-daemon assembleDebug
+    artifacts:
+      - app/build/outputs/apk/debug/app-debug.apk
