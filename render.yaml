@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: loanconnect
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_MOBILE
+        sync: false
+      - key: ADMIN_PIN_HASH
+        sync: false
+      - key: DEMO_OTP
+        sync: false
+      - key: DB_FILE
+        value: /var/data/loanconnect.db
+    disk:
+      name: loanconnect-data
+      mountPath: /var/data
+      sizeGB: 1
