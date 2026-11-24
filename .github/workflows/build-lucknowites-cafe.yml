@@ -26,3 +26,5 @@ jobs:
           retention-days: 14
 
 # Trigger rebuild after Gradle configuration correction.
+
+# Rebuild after Kotlin syntax correction.
