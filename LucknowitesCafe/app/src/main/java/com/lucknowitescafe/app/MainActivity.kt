@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -68,7 +69,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
     })
    if(msg.isNotBlank())Text(msg,Modifier.padding(8.dp),color=ink)
   }
-  if(login)AlertDialog(onDismissRequest={login=false},title={Text("Admin Login")},text={Column{Text("Demo PIN: 1234");OutlinedTextField(pin,{pin=it},label={Text("PIN")})}},confirmButton={TextButton(onClick={if(pin=="1234"){admin=true;login=false;pin=""}else msg="Incorrect PIN"}){Text("Login")}},dismissButton={TextButton(onClick={login=false}){Text("Cancel")}})
+  if(login)AlertDialog(onDismissRequest={login=false},title={Text("Admin Login")},text={Column{Text("Enter admin password");OutlinedTextField(pin,{pin=it},label={Text("Password")},visualTransformation=PasswordVisualTransformation(),singleLine=true)}},confirmButton={TextButton(onClick={if(pin=="CAFE@LU"){admin=true;login=false;pin=""}else msg="Incorrect PIN"}){Text("Login")}},dismissButton={TextButton(onClick={login=false}){Text("Cancel")}})
  }
 }
 
