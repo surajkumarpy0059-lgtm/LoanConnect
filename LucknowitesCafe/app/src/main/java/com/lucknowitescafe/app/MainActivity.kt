@@ -50,7 +50,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    Image(
     painter=painterResource(R.drawable.cafe_banner),
     contentDescription="Lucknowites Cafe shop banner",
-    modifier=Modifier.fillMaxWidth().height(220.dp),
+    modifier=Modifier.fillMaxWidth().height(135.dp),
     contentScale=ContentScale.Crop
    )
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
@@ -80,14 +80,14 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var address by remember{mutableStateOf("")}
  var mode by remember{mutableStateOf("Pickup from Cafe")}
  Column(Modifier.fillMaxSize()){
-  Column(Modifier.fillMaxWidth().background(cream).padding(horizontal=14.dp, vertical=10.dp), verticalArrangement=Arrangement.spacedBy(8.dp)){
-   Text("Good food, good mood",fontSize=21.sp,fontWeight=FontWeight.Bold,color=ink)
-   Text("Order your favourites from LUCKNOWITES CAFE",fontSize=13.sp,color=tea)
+  Column(Modifier.fillMaxWidth().background(cream).padding(horizontal=12.dp, vertical=6.dp), verticalArrangement=Arrangement.spacedBy(4.dp)){
+   Text("Good food, good mood",fontSize=18.sp,fontWeight=FontWeight.Bold,color=ink)
+   Text("Order your favourites from LUCKNOWITES CAFE",fontSize=11.sp,color=tea)
    OutlinedTextField(search,{search=it},modifier=Modifier.fillMaxWidth(),placeholder={Text("Search chai, snacks, combos...")},singleLine=true,shape=RoundedCornerShape(14.dp))
   }
-  if(cats.isNotEmpty())ScrollableTabRow(selectedTabIndex=cats.indexOf(cat).coerceAtLeast(0)){cats.forEach{Tab(cat==it,{cat=it},text={Text(it)})}}
-  LazyColumn(Modifier.weight(1f).padding(horizontal=10.dp)){items(menu.filter{it.category==cat && (search.isBlank() || it.name.contains(search,ignoreCase=true))}){f->
-   Card(Modifier.fillMaxWidth().padding(vertical=5.dp),colors=CardDefaults.cardColors(containerColor=cardCream),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(14.dp)){Text(f.name,fontWeight=FontWeight.Bold,color=ink,fontSize=17.sp);Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){f.prices.forEachIndexed{i,p->Button(onClick={add(f,p)},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text(if(f.prices.size==1)"Add ₹$p" else "Option ${i+1} ₹$p")}}}}}
+  if(cats.isNotEmpty())ScrollableTabRow(selectedTabIndex=cats.indexOf(cat).coerceAtLeast(0), edgePadding=8.dp){cats.forEach{Tab(cat==it,{cat=it},text={Text(it,fontSize=12.sp)})}}
+  LazyColumn(Modifier.weight(1f).padding(horizontal=10.dp)){items(menu.filter{(search.isNotBlank() || it.category==cat) && (search.isBlank() || it.name.contains(search,ignoreCase=true) || it.category.contains(search,ignoreCase=true))}){f->
+   Card(Modifier.fillMaxWidth().padding(vertical=3.dp),colors=CardDefaults.cardColors(containerColor=cardCream),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(10.dp)){Text(f.name,fontWeight=FontWeight.Bold,color=ink,fontSize=15.sp);Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){f.prices.forEachIndexed{i,p->Button(onClick={add(f,p)},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text(if(f.prices.size==1)"Add ₹$p" else "Option ${i+1} ₹$p")}}}}}
   }}
   val total=cart.sumOf{it.price*it.qty}
   Card(Modifier.fillMaxWidth().padding(8.dp)){Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
