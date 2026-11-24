@@ -36,7 +36,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  }
  if(login)AlertDialog(onDismissRequest={login=false},title={Text("Admin Login")},text={Column{Text("Demo PIN: 1234");OutlinedTextField(pin,{pin=it},label={Text("PIN")})}},confirmButton={TextButton(onClick={if(pin=="1234"){admin=true;login=false;pin=""}else msg="Incorrect PIN"}){Text("Login")}},dismissButton={TextButton(onClick={login=false}){Text("Cancel")}})
  }
-}}
+}
 @Composable fun CustomerPage(cart:List<Line>,add:(Food,Int)->Unit,remove:(Line)->Unit,order:()->Unit){
  val cats=menu.map{it.category}.distinct();var cat by remember{mutableStateOf(cats.first())}
  Column(Modifier.fillMaxSize()){
