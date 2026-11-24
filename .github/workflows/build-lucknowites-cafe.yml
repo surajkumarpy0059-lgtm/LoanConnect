@@ -24,3 +24,5 @@ jobs:
           name: LucknowitesCafe-debug-apk
           path: LucknowitesCafe/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
+
+# Trigger rebuild after Gradle configuration correction.
