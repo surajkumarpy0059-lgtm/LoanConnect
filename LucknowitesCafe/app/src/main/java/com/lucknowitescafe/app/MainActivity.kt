@@ -58,6 +58,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    else CustomerPage(menu,cart,
     {f,p->val i=cart.indexOfFirst{it.food.name==f.name&&it.price==p};cart=if(i<0)cart+Line(f,p,1) else cart.mapIndexed{n,l->if(n==i)l.copy(qty=l.qty+1)else l};msg="Added to cart"},
     {l->cart=cart.mapNotNull{if(it==l){if(it.qty>1)it.copy(qty=it.qty-1)else null}else it}},
+    {l->cart=cart.map{if(it.food.name==l.food.name&&it.price==l.price)it.copy(qty=it.qty+1)else it}},
     {name,phone,mode,address->
       val total=cart.sumOf{it.price*it.qty}
       orders=orders+CafeOrder((orders.maxOfOrNull{it.number}?:0)+1,name,phone,mode,address,cart,total)
@@ -69,7 +70,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  }
 }
 
-@Composable fun CustomerPage(menu:List<Food>,cart:List<Line>,add:(Food,Int)->Unit,remove:(Line)->Unit,place:(String,String,String,String)->Unit){
+@Composable fun CustomerPage(menu:List<Food>,cart:List<Line>,add:(Food,Int)->Unit,remove:(Line)->Unit,increase:(Line)->Unit,place:(String,String,String,String)->Unit){
  val cats=menu.map{it.category}.distinct()
  var cat by remember{mutableStateOf(cats.firstOrNull()?:"Menu")}
  var checkout by remember{mutableStateOf(false)}
@@ -89,7 +90,17 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    Card(Modifier.fillMaxWidth().padding(vertical=5.dp),colors=CardDefaults.cardColors(containerColor=cardCream),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(14.dp)){Text(f.name,fontWeight=FontWeight.Bold,color=ink,fontSize=17.sp);Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){f.prices.forEachIndexed{i,p->Button(onClick={add(f,p)},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text(if(f.prices.size==1)"Add ₹$p" else "Option ${i+1} ₹$p")}}}}}
   }}
   val total=cart.sumOf{it.price*it.qty}
-  Card(Modifier.fillMaxWidth().padding(8.dp)){Column(Modifier.padding(10.dp)){Text("Cart • ₹$total",fontWeight=FontWeight.Bold,fontSize=18.sp);cart.forEach{l->Row(verticalAlignment=Alignment.CenterVertically){Text("${l.food.name} × ${l.qty}  ₹${l.price*l.qty}",Modifier.weight(1f),fontSize=12.sp);TextButton(onClick={remove(l)}){Text("−")}}};Button(onClick={checkout=true},enabled=cart.isNotEmpty(),colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.fillMaxWidth()){Text("Continue to Checkout")}}}
+  Card(Modifier.fillMaxWidth().padding(8.dp)){Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
+   Row(verticalAlignment=Alignment.CenterVertically){Text("Cart • ₹$total",fontWeight=FontWeight.Bold,fontSize=18.sp,modifier=Modifier.weight(1f));TextButton(onClick={cart.toList().forEach{l->repeat(l.qty){remove(l.copy(qty=1))}}}){Text("Clear cart",color=Color.Red)}}
+   cart.forEach{l->Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(3.dp)){
+    Text("${l.food.name}  ₹${l.price*l.qty}",Modifier.weight(1f),fontSize=12.sp)
+    TextButton(onClick={remove(l)}){Text("−")}
+    Text("${l.qty}",fontWeight=FontWeight.Bold)
+    TextButton(onClick={increase(l)}){Text("+")}
+    TextButton(onClick={repeat(l.qty){remove(l.copy(qty=1))}}){Text("Remove",color=Color.Red)}
+   }}
+   Button(onClick={checkout=true},enabled=cart.isNotEmpty(),colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.fillMaxWidth()){Text("Continue to Checkout")}
+  }}
  }
  if(checkout) AlertDialog(onDismissRequest={checkout=false},title={Text("Customer & Delivery Details")},text={
   Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
