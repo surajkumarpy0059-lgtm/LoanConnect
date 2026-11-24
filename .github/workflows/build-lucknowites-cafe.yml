@@ -36,3 +36,5 @@ jobs:
 # Rebuild after adding the custom Cafe launcher icon.
 
 # Rebuild with admin order actions, order history, add-food management and updated cafe logo header.
+
+# Rebuild APK with masked admin password.
