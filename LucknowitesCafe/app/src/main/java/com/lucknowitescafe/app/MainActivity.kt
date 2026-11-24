@@ -108,6 +108,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var foodName by remember{mutableStateOf("")}
  var foodPrice by remember{mutableStateOf("")}
  var foodCategory by remember{mutableStateOf("Snacks")}
+ var pendingDelete by remember{mutableStateOf<Int?>(null)}
  val categories=listOf("Budget Combo","Breakfast","Snacks","Lunch","Health Conscious","Evening Cravings")
  val visible=when(tab){"New"->orders.filter{it.status=="New"};"Completed"->orders.filter{it.status=="Completed"};"Cancelled"->orders.filter{it.status=="Cancelled"};else->orders}
  Column(Modifier.fillMaxSize().padding(14.dp)){
@@ -128,11 +129,13 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
       Button(onClick={change(o.copy(status="Completed"))},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text("Mark Completed")}
       OutlinedButton(onClick={change(o.copy(status="Cancelled"))}){Text("Cancel Order")}
     }
+    OutlinedButton(onClick={pendingDelete=o.number},colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.Red),modifier=Modifier.fillMaxWidth()){Text("Delete Order")}
    }}
   }}
   Text("Menu items: ${menu.size} • Added food appears in Customer menu.",fontSize=12.sp)
   Text("Note: Orders and menu changes are currently stored in this app session on this phone. Online customer-to-admin sync and permanent history need a connected database.",fontSize=11.sp,color=tea)
  }
+ if(pendingDelete!=null)AlertDialog(onDismissRequest={pendingDelete=null},title={Text("Delete order?")},text={Text("Order #${pendingDelete} will be permanently removed from this app session.")},confirmButton={TextButton(onClick={pendingDelete?.let{delete(it)};pendingDelete=null}){Text("Delete",color=Color.Red)}},dismissButton={TextButton(onClick={pendingDelete=null}){Text("Keep")}})
  if(addDialog)AlertDialog(onDismissRequest={addDialog=false},title={Text("Add New Food")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
   OutlinedTextField(foodName,{foodName=it},label={Text("Food name")},singleLine=true)
   OutlinedTextField(foodPrice,{foodPrice=it.filter{c->c.isDigit()}},label={Text("Price (₹)")},singleLine=true)
