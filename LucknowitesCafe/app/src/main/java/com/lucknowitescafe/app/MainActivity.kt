@@ -50,8 +50,8 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    Image(
     painter=painterResource(R.drawable.cafe_banner),
     contentDescription="Lucknowites Cafe shop banner",
-    modifier=Modifier.fillMaxWidth().height(165.dp),
-    contentScale=ContentScale.Fit
+    modifier=Modifier.fillMaxWidth().height(220.dp),
+    contentScale=ContentScale.Crop
    )
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
    if(admin) AdminPage(orders,menu,{updated->orders=orders.map{if(it.number==updated.number)updated else it}},{menu=menu+it},{number->orders=orders.filterNot{it.number==number}})
