@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -48,7 +50,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    Image(
     painter=painterResource(R.drawable.cafe_banner),
     contentDescription="Lucknowites Cafe shop banner",
-    modifier=Modifier.fillMaxWidth().height(230.dp),
+    modifier=Modifier.fillMaxWidth().height(165.dp),
     contentScale=ContentScale.Fit
    )
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
@@ -71,13 +73,19 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  val cats=menu.map{it.category}.distinct()
  var cat by remember{mutableStateOf(cats.firstOrNull()?:"Menu")}
  var checkout by remember{mutableStateOf(false)}
+ var search by remember{mutableStateOf("")}
  var customer by remember{mutableStateOf("")}
  var phone by remember{mutableStateOf("")}
  var address by remember{mutableStateOf("")}
  var mode by remember{mutableStateOf("Pickup from Cafe")}
  Column(Modifier.fillMaxSize()){
+  Column(Modifier.fillMaxWidth().background(cream).padding(horizontal=14.dp, vertical=10.dp), verticalArrangement=Arrangement.spacedBy(8.dp)){
+   Text("Good food, good mood",fontSize=21.sp,fontWeight=FontWeight.Bold,color=ink)
+   Text("Order your favourites from LUCKNOWITES CAFE",fontSize=13.sp,color=tea)
+   OutlinedTextField(search,{search=it},modifier=Modifier.fillMaxWidth(),placeholder={Text("Search chai, snacks, combos...")},singleLine=true,shape=RoundedCornerShape(14.dp))
+  }
   if(cats.isNotEmpty())ScrollableTabRow(selectedTabIndex=cats.indexOf(cat).coerceAtLeast(0)){cats.forEach{Tab(cat==it,{cat=it},text={Text(it)})}}
-  LazyColumn(Modifier.weight(1f).padding(horizontal=10.dp)){items(menu.filter{it.category==cat}){f->
+  LazyColumn(Modifier.weight(1f).padding(horizontal=10.dp)){items(menu.filter{it.category==cat && (search.isBlank() || it.name.contains(search,ignoreCase=true))}){f->
    Card(Modifier.fillMaxWidth().padding(vertical=5.dp),colors=CardDefaults.cardColors(containerColor=cardCream),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(14.dp)){Text(f.name,fontWeight=FontWeight.Bold,color=ink,fontSize=17.sp);Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){f.prices.forEachIndexed{i,p->Button(onClick={add(f,p)},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text(if(f.prices.size==1)"Add ₹$p" else "Option ${i+1} ₹$p")}}}}}
   }}
   val total=cart.sumOf{it.price*it.qty}
@@ -107,7 +115,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Column(Modifier.fillMaxSize().padding(14.dp)){
   Text("Admin Dashboard",fontSize=23.sp,fontWeight=FontWeight.Bold)
   Text("Manage orders, history and menu")
-  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf("New","Completed","Cancelled","All History").forEach{t->FilterChip(selected=tab==t,onClick={tab=t},label={Text(t)})}}
+  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf("New","Completed","Cancelled","All History").forEach{t->FilterChip(selected=tab==t,onClick={tab=t},label={Text(t)})}}
   Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("Orders: ${orders.size}",Modifier.weight(1f));Button(onClick={addDialog=true},colors=ButtonDefaults.buttonColors(containerColor=orange)){Text("+ Add Food")}}
   if(visible.isEmpty())Text(if(tab=="New")"No new orders." else "No orders in this section.")
   LazyColumn(Modifier.weight(1f)){items(visible.reversed()){o->
