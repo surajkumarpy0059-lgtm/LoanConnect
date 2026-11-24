@@ -45,19 +45,12 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var msg by remember{mutableStateOf("")}
  MaterialTheme(colorScheme=lightColorScheme(primary=tea,secondary=gold,background=cream,surface=Color.White)){
   Column(Modifier.fillMaxSize().background(cream)){
-   Column(Modifier.fillMaxWidth().background(ink).padding(horizontal=18.dp, vertical=16.dp)) {
-    Row(verticalAlignment=Alignment.CenterVertically) {
-      Image(painter=painterResource(R.drawable.lucknowites_logo),contentDescription="Lucknowites Cafe official logo",modifier=Modifier.size(76.dp),contentScale=ContentScale.Crop)
-      Spacer(Modifier.width(12.dp))
-      Column {
-        Text("LUCKNOWITES",color=Color.White,fontSize=23.sp,fontWeight=FontWeight.ExtraBold)
-        Text("CAFE",color=gold,fontSize=22.sp,fontWeight=FontWeight.Bold)
-        Text("Every Meal is a Celebration",color=Color(0xFFFFE8C2),fontSize=12.sp)
-      }
-    }
-    Spacer(Modifier.height(10.dp))
-    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) { Text("CHAI",color=gold,fontWeight=FontWeight.Bold,fontSize=11.sp);Text("• SNACKS • COMBOS • MEALS",color=Color.White,fontSize=11.sp) }
-   }
+   Image(
+    painter=painterResource(R.drawable.cafe_banner),
+    contentDescription="Lucknowites Cafe shop banner",
+    modifier=Modifier.fillMaxWidth().height(150.dp),
+    contentScale=ContentScale.Crop
+   )
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
    if(admin) AdminPage(orders,menu,{updated->orders=orders.map{if(it.number==updated.number)updated else it}},{menu=menu+it},{number->orders=orders.filterNot{it.number==number}})
    else CustomerPage(menu,cart,
