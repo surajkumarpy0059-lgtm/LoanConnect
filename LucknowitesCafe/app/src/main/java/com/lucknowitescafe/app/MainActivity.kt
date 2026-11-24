@@ -58,7 +58,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) { Text("CHAI",color=gold,fontWeight=FontWeight.Bold,fontSize=11.sp);Text("• SNACKS • COMBOS • MEALS",color=Color.White,fontSize=11.sp) }
    }
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
-   if(admin) AdminPage(orders,menu,{updated->orders=orders.map{if(it.number==updated.number)updated else it}},{menu=menu+it})
+   if(admin) AdminPage(orders,menu,{updated->orders=orders.map{if(it.number==updated.number)updated else it}},{menu=menu+it},{number->orders=orders.filterNot{it.number==number}})
    else CustomerPage(menu,cart,
     {f,p->val i=cart.indexOfFirst{it.food.name==f.name&&it.price==p};cart=if(i<0)cart+Line(f,p,1) else cart.mapIndexed{n,l->if(n==i)l.copy(qty=l.qty+1)else l};msg="Added to cart"},
     {l->cart=cart.mapNotNull{if(it==l){if(it.qty>1)it.copy(qty=it.qty-1)else null}else it}},
@@ -101,7 +101,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  },confirmButton={TextButton(onClick={if(customer.isNotBlank()&&phone.length>=10&&(mode=="Pickup from Cafe"||address.isNotBlank())){place(customer.trim(),phone.trim(),mode,address.trim());checkout=false}}){Text("Place Order")}},dismissButton={TextButton(onClick={checkout=false}){Text("Cancel")}})
 }
 
-@Composable fun AdminPage(orders:List<CafeOrder>,menu:List<Food>,change:(CafeOrder)->Unit,addFood:(Food)->Unit){
+@Composable fun AdminPage(orders:List<CafeOrder>,menu:List<Food>,change:(CafeOrder)->Unit,addFood:(Food)->Unit,delete:(Int)->Unit){
  var tab by remember{mutableStateOf("New")}
  var addDialog by remember{mutableStateOf(false)}
  var foodName by remember{mutableStateOf("")}
