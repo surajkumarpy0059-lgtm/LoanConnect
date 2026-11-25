@@ -22,10 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 data class Food(val category:String,val name:String,val prices:List<Int>)
 data class Line(val food:Food,val price:Int,val qty:Int)
-data class CafeOrder(val number:Int,val customer:String,val phone:String,val fulfillment:String,val address:String,val lines:List<Line>,val total:Int,val status:String="New")
+data class CafeOrder(val number:Int,val customer:String,val phone:String,val fulfillment:String,val address:String,val lines:List<Line>,val total:Int,val status:String="Order Received",val prepMinutes:Int=20,val createdAt:Long=System.currentTimeMillis())
 val initialMenu=listOf(
 Food("Budget Combo","Chai + Bun Makkhan",listOf(49)),Food("Budget Combo","Chai + Poha",listOf(49)),Food("Budget Combo","Fries + Chai",listOf(59)),Food("Budget Combo","Fries / Potato Bites + Chai + Coffee",listOf(79)),Food("Budget Combo","Chai & Paratha",listOf(59)),Food("Budget Combo","Chai & Chilla",listOf(59)),Food("Budget Combo","Chilla & Coffee",listOf(69)),Food("Budget Combo","Special Combo: Potato Bites, Fries & Chai/Coffee",listOf(120)),
 Food("Breakfast","Masala Chai",listOf(10,15,20)),Food("Breakfast","Tandoori Chai",listOf(40)),Food("Breakfast","Coffee",listOf(40)),Food("Breakfast","Cold Coffee",listOf(80)),
@@ -55,7 +56,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    )
    Row(Modifier.fillMaxWidth().padding(8.dp)){Button(onClick={admin=false},colors=ButtonDefaults.buttonColors(containerColor=tea),modifier=Modifier.weight(1f)){Text("Customer")};Spacer(Modifier.width(8.dp));Button(onClick={login=true},colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.weight(1f)){Text("Admin")}}
    if(admin) AdminPage(orders,menu,{updated->orders=orders.map{if(it.number==updated.number)updated else it}},{menu=menu+it},{number->orders=orders.filterNot{it.number==number}})
-   else CustomerPage(menu,cart,
+   else CustomerPage(menu,cart,orders,
     {f,p->val i=cart.indexOfFirst{it.food.name==f.name&&it.price==p};cart=if(i<0)cart+Line(f,p,1) else cart.mapIndexed{n,l->if(n==i)l.copy(qty=l.qty+1)else l};msg="Added to cart"},
     {l->cart=cart.mapNotNull{if(it==l){if(it.qty>1)it.copy(qty=it.qty-1)else null}else it}},
     {l->cart=cart.map{if(it.food.name==l.food.name&&it.price==l.price)it.copy(qty=it.qty+1)else it}},
@@ -70,7 +71,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  }
 }
 
-@Composable fun CustomerPage(menu:List<Food>,cart:List<Line>,add:(Food,Int)->Unit,remove:(Line)->Unit,increase:(Line)->Unit,place:(String,String,String,String)->Unit){
+@Composable fun CustomerPage(menu:List<Food>,cart:List<Line>,orders:List<CafeOrder>,add:(Food,Int)->Unit,remove:(Line)->Unit,increase:(Line)->Unit,place:(String,String,String,String)->Unit){
  val cats=menu.map{it.category}.distinct()
  var cat by remember{mutableStateOf(cats.firstOrNull()?:"Menu")}
  var checkout by remember{mutableStateOf(false)}
@@ -79,6 +80,8 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var phone by remember{mutableStateOf("")}
  var address by remember{mutableStateOf("")}
  var mode by remember{mutableStateOf("Pickup from Cafe")}
+ var now by remember{mutableLongStateOf(System.currentTimeMillis())}
+ LaunchedEffect(Unit){while(true){delay(30000);now=System.currentTimeMillis()}}
  Column(Modifier.fillMaxSize()){
   Column(Modifier.fillMaxWidth().background(cream).padding(horizontal=12.dp, vertical=6.dp), verticalArrangement=Arrangement.spacedBy(4.dp)){
    Text("Good food, good mood",fontSize=18.sp,fontWeight=FontWeight.Bold,color=ink)
@@ -101,6 +104,19 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    }}
    Button(onClick={checkout=true},enabled=cart.isNotEmpty(),colors=ButtonDefaults.buttonColors(containerColor=orange),modifier=Modifier.fillMaxWidth()){Text("Continue to Checkout")}
   }}
+  val myOrders=orders.filter{phone.isNotBlank() && it.phone==phone.trim()}.sortedByDescending{it.number}
+  if(myOrders.isNotEmpty()) Column(Modifier.fillMaxWidth().padding(horizontal=10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
+   Text("My Order Tracking",fontSize=17.sp,fontWeight=FontWeight.Bold,color=ink)
+   myOrders.forEach{o->
+    val remaining=((o.createdAt+o.prepMinutes*60000L-now).coerceAtLeast(0L)/60000L).toInt()
+    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color(0xFFEDE5F2))){Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+     Text("Order #${o.number} • ₹${o.total}",fontWeight=FontWeight.Bold)
+     Text("Status: ${o.status}",fontWeight=FontWeight.Bold,color=if(o.status=="Ready")leaf else tea)
+     Text(if(o.status=="Ready")"Your order is ready!" else if(o.status=="Cancelled")"This order was cancelled." else if(remaining>0)"Estimated time left: about $remaining min" else "Estimated ready time reached — please check with the cafe.")
+     Text("Estimated preparation: ${o.prepMinutes} min",fontSize=12.sp,color=tea)
+    }}
+   }
+  }
  }
  if(checkout) AlertDialog(onDismissRequest={checkout=false},title={Text("Customer & Delivery Details")},text={
   Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
@@ -121,8 +137,10 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var foodPrice by remember{mutableStateOf("")}
  var foodCategory by remember{mutableStateOf("Snacks")}
  var pendingDelete by remember{mutableStateOf<Int?>(null)}
+ var editingOrder by remember{mutableStateOf<CafeOrder?>(null)}
+ var prepText by remember{mutableStateOf("")}
  val categories=listOf("Budget Combo","Breakfast","Snacks","Lunch","Health Conscious","Evening Cravings")
- val visible=when(tab){"New"->orders.filter{it.status=="New"};"Completed"->orders.filter{it.status=="Completed"};"Cancelled"->orders.filter{it.status=="Cancelled"};else->orders}
+ val visible=when(tab){"New"->orders.filter{it.status!="Completed"&&it.status!="Cancelled"};"Completed"->orders.filter{it.status=="Completed"};"Cancelled"->orders.filter{it.status=="Cancelled"};else->orders}
  Column(Modifier.fillMaxSize().padding(14.dp)){
   Text("Admin Dashboard",fontSize=23.sp,fontWeight=FontWeight.Bold)
   Text("Manage orders, history and menu")
@@ -132,21 +150,27 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
   LazyColumn(Modifier.weight(1f)){items(visible.reversed()){o->
    Card(Modifier.fillMaxWidth().padding(vertical=5.dp),colors=CardDefaults.cardColors(containerColor=cardCream)){Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
     Text("Order #${o.number} • ₹${o.total}",fontWeight=FontWeight.Bold,fontSize=18.sp)
-    Text("Status: ${o.status}",fontWeight=FontWeight.Bold,color=when(o.status){"Completed"->leaf;"Cancelled"->Color.Red;else->tea})
+    Text("Status: ${o.status}",fontWeight=FontWeight.Bold,color=when(o.status){"Ready","Completed"->leaf;"Cancelled"->Color.Red;else->tea})
+    Text("Preparation time: ${o.prepMinutes} min")
     Text("Name: ${o.customer}");Text("Mobile: ${o.phone}");Text("Type: ${o.fulfillment}")
     if(o.fulfillment=="Home Delivery")Text("Address: ${o.address}")
     Text("Items:")
     o.lines.forEach{Text("• ${it.food.name} × ${it.qty} — ₹${it.price*it.qty}")}
-    if(o.status=="New")Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-      Button(onClick={change(o.copy(status="Completed"))},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text("Mark Completed")}
-      OutlinedButton(onClick={change(o.copy(status="Cancelled"))}){Text("Cancel Order")}
+    if(o.status!="Completed"&&o.status!="Cancelled")Column(verticalArrangement=Arrangement.spacedBy(4.dp)){
+      Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
+       Button(onClick={change(o.copy(status="Preparing"))},colors=ButtonDefaults.buttonColors(containerColor=orange)){Text("Preparing")}
+       Button(onClick={change(o.copy(status="Ready"))},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text("Ready")}
+      }
+      Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically){Text("ETA: ${o.prepMinutes} min");TextButton(onClick={editingOrder=o;prepText=o.prepMinutes.toString()}){Text("Change time")};TextButton(onClick={change(o.copy(status="Cancelled"))}){Text("Cancel order",color=Color.Red)}}
     }
+    if(o.status=="Ready")Button(onClick={change(o.copy(status="Completed"))},colors=ButtonDefaults.buttonColors(containerColor=leaf)){Text("Mark Picked Up / Delivered")}
     OutlinedButton(onClick={pendingDelete=o.number},colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.Red),modifier=Modifier.fillMaxWidth()){Text("Delete Order")}
    }}
   }}
   Text("Menu items: ${menu.size} • Added food appears in Customer menu.",fontSize=12.sp)
   Text("Note: Orders and menu changes are currently stored in this app session on this phone. Online customer-to-admin sync and permanent history need a connected database.",fontSize=11.sp,color=tea)
  }
+ if(editingOrder!=null)AlertDialog(onDismissRequest={editingOrder=null},title={Text("Set preparation time")},text={Column(verticalArrangement=Arrangement.spacedBy(6.dp)){Text("Enter expected minutes to prepare this order.");OutlinedTextField(prepText,{prepText=it.filter{c->c.isDigit()}},label={Text("Minutes")},singleLine=true);Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){listOf(10,15,20,30,40,60).forEach{m->TextButton(onClick={prepText=m.toString()}){Text("$m")}}}}},confirmButton={TextButton(onClick={val mins=prepText.toIntOrNull();if(mins!=null&&mins in 1..240)editingOrder?.let{o->change(o.copy(prepMinutes=mins))};editingOrder=null}){Text("Save")}},dismissButton={TextButton(onClick={editingOrder=null}){Text("Cancel")}})
  if(pendingDelete!=null)AlertDialog(onDismissRequest={pendingDelete=null},title={Text("Delete order?")},text={Text("Order #${pendingDelete} will be permanently removed from this app session.")},confirmButton={TextButton(onClick={pendingDelete?.let{delete(it)};pendingDelete=null}){Text("Delete",color=Color.Red)}},dismissButton={TextButton(onClick={pendingDelete=null}){Text("Keep")}})
  if(addDialog)AlertDialog(onDismissRequest={addDialog=false},title={Text("Add New Food")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
   OutlinedTextField(foodName,{foodName=it},label={Text("Food name")},singleLine=true)
